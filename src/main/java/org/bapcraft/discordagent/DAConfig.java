@@ -6,7 +6,7 @@ import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 @ConfigSerializable
 public class DAConfig {
 
-	@Setting(value = "token")
-	public String authToken = "";
+	@Setting(value = "bot_token")
+	public String botAuthToken = "";
 
 }

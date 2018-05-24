@@ -17,6 +17,10 @@ import org.spongepowered.api.service.ServiceManager;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 
+import net.dv8tion.jda.bot.entities.ApplicationInfo;
+import net.dv8tion.jda.core.AccountType;
+import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.JDABuilder;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
@@ -68,13 +72,27 @@ public class DiscordAgentPlugin {
 			throw e;
 		}
 
+		this.logger.info("Using Discord auth token: " + this.config.botAuthToken.substring(0, 8) + "... (snipped)");
+		JDA jda = new JDABuilder(AccountType.BOT)
+				.setToken(this.config.botAuthToken)
+				.addEventListener(new DiscordEventListener(this.logger))
+				.buildAsync();
+
+		ApplicationInfo ai = jda.asBot().getApplicationInfo().complete();
+		String inviteUrl = ai.getInviteUrl(net.dv8tion.jda.core.Permission.ALL_GUILD_PERMISSIONS);
+		this.logger.info("Discord bot needs to be invited to server if not: " + inviteUrl);
+		
 		this.agentService = new DiscordAgentServiceImpl(this.logger);
 
 	}
 
 	@Listener
 	public void onPostInit(GamePostInitializationEvent event) {
-		this.serviceManager.setProvider(this, DiscordAgentService.class, this.agentService);
+		if (this.agentService != null) {
+			this.serviceManager.setProvider(this, DiscordAgentService.class, this.agentService);
+		} else {
+			this.logger.warn("Agent was not initialized, was there a problem configuring the bot?");
+		}
 	}
 
 }

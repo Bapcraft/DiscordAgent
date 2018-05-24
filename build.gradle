@@ -33,11 +33,23 @@ dependencies {
 
 plugins {
     id 'org.spongepowered.plugin' version '0.8.1'
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '1.2.3'
 }
+
+defaultTasks 'build', 'shadowJar'
 
 repositories {
     mavenCentral()
     jcenter()
+    maven {
+        name 'Sonatype'
+        url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+    maven {
+        name 'sponge'
+        url 'http://repo.spongepowered.org/maven'
+    }
 }
 
 group = 'org.bapcraft'
@@ -46,13 +58,28 @@ description = 'Turn your server into a Discord bot!'
 
 dependencies {
     compile 'org.spongepowered:spongeapi:7.0.0'
+    compile 'net.dv8tion:JDA:3.6.0_367'
+    
+    // All of these are transive via JDA, but needed for the shading.
+    compile 'org.apache.commons:commons-lang3'
+    compile 'org.apache.commons:commons-collections4:4.1'
+    compile 'com.squareup.okhttp3:okhttp:3.10.0'
+    compile 'com.squareup.okio:okio:1.14.0'
+    compile 'com.neovisionaries:nv-websocket-client:2.4'
+    compile 'com.mashape.unirest:unirest-java:1.4.9'
 }
 
-sourceSets {
-    main {
-        java {
-            srcDirs = ['src/main/java']
-        }
+task fatJar(type: Jar) {
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+shadowJar {
+    dependencies {
+        include dependency('.*:.*')
+        exclude dependency('org.spongepowered:.*')
+        relocate 'org.apache', 'org.bapcraft.shaded.org.apache'
     }
 }
 
