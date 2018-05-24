@@ -59,6 +59,7 @@ description = 'Turn your server into a Discord bot!'
 dependencies {
     compile 'org.spongepowered:spongeapi:7.0.0'
     compile 'net.dv8tion:JDA:3.6.0_367'
+    compile 'com.google.code.gson:gson:2.8.5'
     
     // All of these are transive via JDA, but needed for the shading.
     compile 'org.apache.commons:commons-lang3'
@@ -77,9 +78,16 @@ task fatJar(type: Jar) {
 
 shadowJar {
     dependencies {
+    	// TODO Make this not include things we don't need.
+        relocate 'org.apache', 'org.bapcraft.shaded.org.apache'
+        relocate 'com.google.code.gson', 'org.bapcraft.shaded.com.google.code.gson'
+        relocate 'net.dv8tion', 'org.bapcraft.shaded.net.dv8tion'
+        relocate 'com.squareup', 'org.bapcraft.shaded.com.squareup'
+        relocate 'com.neovisionaries', 'org.bapcraft.shaded.com.neovisionaries'
+        relocate 'com.mashape', 'org.bapcraft.shaded.com.mashape'
+        relocate 'okio', 'org.bapcraft.shaded.okio'
         include dependency('.*:.*')
         exclude dependency('org.spongepowered:.*')
-        relocate 'org.apache', 'org.bapcraft.shaded.org.apache'
     }
 }
 

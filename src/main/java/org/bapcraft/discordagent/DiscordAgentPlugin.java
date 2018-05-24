@@ -1,18 +1,21 @@
 package org.bapcraft.discordagent;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
 import org.bapcraft.discordagent.api.DiscordAgentService;
+import org.bapcraft.discordagent.storage.AgentStorage;
+import org.bapcraft.discordagent.storage.FileAgentStorage;
 import org.slf4j.Logger;
-import org.spongepowered.api.Game;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
+import org.spongepowered.api.asset.AssetManager;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
-import org.spongepowered.api.service.ServiceManager;
 
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -30,16 +33,10 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 public class DiscordAgentPlugin {
 
 	@Inject
-	private Game game;
-
-	@Inject
-	private ServiceManager serviceManager;
-
-	@Inject
 	private Logger logger;
 
-	@Inject
-	@DefaultConfig(sharedRoot = true)
+	// @Inject
+	// @DefaultConfig(sharedRoot = true)
 	private Path configPath;
 
 	@Inject
@@ -47,17 +44,25 @@ public class DiscordAgentPlugin {
 	private ConfigurationLoader<CommentedConfigurationNode> configLoader;
 
 	private DAConfig config;
+	private AgentStorage storage;
 
 	private DiscordAgentServiceImpl agentService;
+
+	@Inject
+	public DiscordAgentPlugin(@DefaultConfig(sharedRoot = true) final Path configPath) {
+		this.configPath = configPath;
+	}
 
 	@Listener
 	public void onInit(GameInitializationEvent event) throws Exception {
 
 		// Load config.
-		Asset cfgAsset = this.game.getAssetManager().getAsset(this, "default.conf").get();
+		AssetManager assets = Sponge.getAssetManager();
+		Asset cfgAsset = assets.getAsset(this, "default.conf").get();
 		try {
 
-			if (!this.configPath.toFile().exists()) {
+			File configFile = this.configPath.toFile();
+			if (!configFile.exists()) {
 				cfgAsset.copyToFile(this.configPath);
 			}
 
@@ -72,11 +77,15 @@ public class DiscordAgentPlugin {
 			throw e;
 		}
 
+		// Set up the connection to the Discord server.
 		this.logger.info("Using Discord auth token: " + this.config.botAuthToken.substring(0, 8) + "... (snipped)");
 		JDA jda = new JDABuilder(AccountType.BOT)
 				.setToken(this.config.botAuthToken)
 				.addEventListener(new DiscordEventListener(this.logger))
 				.buildAsync();
+
+		File storageDir = Sponge.getGame().getGameDirectory().toFile();
+		this.storage = new FileAgentStorage(new File(storageDir, "discordagent"), this.logger);
 
 		ApplicationInfo ai = jda.asBot().getApplicationInfo().complete();
 		String inviteUrl = ai.getInviteUrl(net.dv8tion.jda.core.Permission.ALL_GUILD_PERMISSIONS);
@@ -89,7 +98,7 @@ public class DiscordAgentPlugin {
 	@Listener
 	public void onPostInit(GamePostInitializationEvent event) {
 		if (this.agentService != null) {
-			this.serviceManager.setProvider(this, DiscordAgentService.class, this.agentService);
+			Sponge.getServiceManager().setProvider(this, DiscordAgentService.class, this.agentService);
 		} else {
 			this.logger.warn("Agent was not initialized, was there a problem configuring the bot?");
 		}
