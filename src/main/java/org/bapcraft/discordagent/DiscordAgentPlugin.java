@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import org.bapcraft.discordagent.api.DiscordAgentService;
+import org.bapcraft.discordagent.devent.MessageHandler;
 import org.bapcraft.discordagent.storage.AgentStorage;
 import org.bapcraft.discordagent.storage.FileAgentStorage;
 import org.slf4j.Logger;
@@ -81,7 +82,7 @@ public class DiscordAgentPlugin {
 		this.logger.info("Using Discord auth token: " + this.config.botAuthToken.substring(0, 8) + "... (snipped)");
 		JDA jda = new JDABuilder(AccountType.BOT)
 				.setToken(this.config.botAuthToken)
-				.addEventListener(new DiscordEventListener(this.logger))
+				.addEventListener(new MessageHandler(this.logger))
 				.buildAsync();
 
 		File storageDir = Sponge.getGame().getGameDirectory().toFile();
