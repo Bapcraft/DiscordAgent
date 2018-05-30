@@ -2,8 +2,11 @@ package org.bapcraft.discordagent.devent;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.entity.living.player.Player;
 
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
@@ -48,7 +51,29 @@ public class MessageHandler implements EventListener {
 			arg = expr[2];
 		}
 
-		// TODO
+		if (cmd.equals("online")) {
+
+			List<Player> players = Sponge.getServer()
+					.getOnlinePlayers()
+					.stream()
+					.sorted((a, b) -> a.getName().compareTo(b.getName()))
+					.collect(Collectors.toList());
+
+			StringBuilder sb = new StringBuilder(String.format("**Players online (%s):** ", players.size()));
+			if (players.size() == 0) {
+				sb.append("*none*");
+			} else {
+
+				sb.append(players.get(0).getName());
+				for (int i = 1; i < players.size(); i++) {
+					sb.append(", " + players.get(i).getName());
+				}
+
+			}
+
+			mre.getChannel().sendMessage(sb.toString()).queue();
+
+		}
 
 	}
 
@@ -57,7 +82,8 @@ public class MessageHandler implements EventListener {
 		List<String> lines = Arrays.asList(
 				"Hi, welcome to Bapcraft!  Here's a list of commands I know!:",
 				"**!bap help** - prints this error message",
-				"**!bap link** - get a token to link your account to your Minecraft account in-game with `/dagent link`");
+				"**!bap link** - get a token to link your account to your Minecraft account in-game with `/dagent link`",
+				"**!bap online** - list players in-game");
 
 		StringBuilder sb = new StringBuilder();
 		for (String s : lines) {
