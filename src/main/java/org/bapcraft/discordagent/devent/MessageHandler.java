@@ -4,12 +4,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.bapcraft.discordagent.LinkManager;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.MessageChannel;
+import net.dv8tion.jda.core.entities.PrivateChannel;
+import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.Event;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.EventListener;
@@ -17,9 +20,11 @@ import net.dv8tion.jda.core.hooks.EventListener;
 public class MessageHandler implements EventListener {
 
 	private Logger logger;
+	private LinkManager links;
 
-	public MessageHandler(Logger logger) {
+	public MessageHandler(Logger logger, LinkManager links) {
 		this.logger = logger;
+		this.links = links;
 	}
 
 	@Override
@@ -45,7 +50,7 @@ public class MessageHandler implements EventListener {
 			return;
 		}
 
-		String cmd = expr[1];
+		String cmd = expr[1].toLowerCase();
 		String arg = null;
 		if (expr.length == 3) {
 			arg = expr[2];
@@ -72,6 +77,31 @@ public class MessageHandler implements EventListener {
 			}
 
 			mre.getChannel().sendMessage(sb.toString()).queue();
+
+		} else if (cmd.equals("link")) {
+
+			User u = mre.getAuthor();
+
+			this.logger.info("Initializing token for user " + u.getAsMention() + " (" + u.getName() + ")");
+
+			u.openPrivateChannel().queue((PrivateChannel ch) -> {
+
+				// Get a new token.
+				String token = this.links.createNewToken(u.getIdLong(), u.getName(), u.getDiscriminator());
+
+				// Send the PM.
+				ch.sendMessage(
+						String.format("Run this command in-game to link your accounts! `/dagent link %s`", token))
+						.queue();
+
+				// Send the player a message in the channel.
+				mre.getChannel()
+						.sendMessage(u.getAsMention() + " Just sent you a private message, check your PMs!")
+						.queue();
+
+			}, err -> {
+				this.logger.error("Couldn't open private message channel with " + u.getAsMention() + "!", err);
+			});
 
 		}
 

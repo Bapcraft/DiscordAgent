@@ -46,6 +46,7 @@ public class DiscordAgentPlugin {
 
 	private DAConfig config;
 	private AgentStorage storage;
+	private LinkManager linkManager;
 
 	private DiscordAgentServiceImpl agentService;
 
@@ -78,15 +79,19 @@ public class DiscordAgentPlugin {
 			throw e;
 		}
 
+		// Prepare storage backend, just always using plain files for now.
+		File storageDir = Sponge.getGame().getGameDirectory().toFile();
+		this.storage = new FileAgentStorage(new File(storageDir, "discordagent"), this.logger);
+
+		// Prepare out link manager.
+		this.linkManager = new LinkManager(this.storage);
+
 		// Set up the connection to the Discord server.
 		this.logger.info("Using Discord auth token: " + this.config.botAuthToken.substring(0, 8) + "... (snipped)");
 		JDA jda = new JDABuilder(AccountType.BOT)
 				.setToken(this.config.botAuthToken)
-				.addEventListener(new MessageHandler(this.logger))
+				.addEventListener(new MessageHandler(this.logger, this.linkManager))
 				.buildAsync();
-
-		File storageDir = Sponge.getGame().getGameDirectory().toFile();
-		this.storage = new FileAgentStorage(new File(storageDir, "discordagent"), this.logger);
 
 		ApplicationInfo ai = jda.asBot().getApplicationInfo().complete();
 		String inviteUrl = ai.getInviteUrl(net.dv8tion.jda.core.Permission.ALL_GUILD_PERMISSIONS);

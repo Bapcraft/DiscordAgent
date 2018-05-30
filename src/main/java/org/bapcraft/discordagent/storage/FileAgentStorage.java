@@ -57,8 +57,7 @@ public class FileAgentStorage implements AgentStorage {
 			Gson gson = this.createGson();
 			return gson.fromJson(fr, UserProfile.class);
 		} catch (IOException e) {
-			this.logger.error("Failed to read Discord user!", e);
-			return null;
+			return null; // There wasn't a user profile.
 		}
 	}
 

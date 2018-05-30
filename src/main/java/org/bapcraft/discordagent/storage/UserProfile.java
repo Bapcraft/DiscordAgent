@@ -4,9 +4,9 @@ public class UserProfile {
 
 	public long snowflakeId;
 	public String discordUsername;
-	public int discordDiscrim;
+	public String discordDiscrim;
 
-	public UserProfile(long snowflake, String username, int discrim) {
+	public UserProfile(long snowflake, String username, String discrim) {
 		this.snowflakeId = snowflake;
 		this.discordUsername = username;
 		this.discordDiscrim = discrim;
