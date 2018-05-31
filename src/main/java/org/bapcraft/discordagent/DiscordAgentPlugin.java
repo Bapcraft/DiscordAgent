@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import org.bapcraft.discordagent.api.DiscordAgentService;
+import org.bapcraft.discordagent.cmd.LinkExecutor;
+import org.bapcraft.discordagent.cmd.MsgExecutor;
 import org.bapcraft.discordagent.devent.MessageHandler;
 import org.bapcraft.discordagent.storage.AgentStorage;
 import org.bapcraft.discordagent.storage.FileAgentStorage;
@@ -12,11 +14,15 @@ import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.asset.Asset;
 import org.spongepowered.api.asset.AssetManager;
+import org.spongepowered.api.command.CommandMapping;
+import org.spongepowered.api.command.args.GenericArguments;
+import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.text.Text;
 
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -80,8 +86,12 @@ public class DiscordAgentPlugin {
 		}
 
 		// Prepare storage backend, just always using plain files for now.
-		File storageDir = Sponge.getGame().getGameDirectory().toFile();
-		this.storage = new FileAgentStorage(new File(storageDir, "discordagent"), this.logger);
+		File storageDir = new File("discordagent");
+		if (!(storageDir.exists() && storageDir.isDirectory())) {
+			storageDir.mkdirs();
+		}
+
+		this.storage = new FileAgentStorage(storageDir, this.logger);
 
 		// Prepare out link manager.
 		this.linkManager = new LinkManager(this.storage);
@@ -96,8 +106,30 @@ public class DiscordAgentPlugin {
 		ApplicationInfo ai = jda.asBot().getApplicationInfo().complete();
 		String inviteUrl = ai.getInviteUrl(net.dv8tion.jda.core.Permission.ALL_GUILD_PERMISSIONS);
 		this.logger.info("Discord bot needs to be invited to server if not: " + inviteUrl);
-		
-		this.agentService = new DiscordAgentServiceImpl(this.logger);
+
+		this.agentService = new DiscordAgentServiceImpl(this.logger, this.storage, jda);
+
+		CommandSpec daLinkCmd = CommandSpec.builder()
+				.description(Text.of("Link your Minecraft account to your Discord account using the token."))
+				.arguments(GenericArguments.string(Text.of("token")))
+				.executor(new LinkExecutor(this.linkManager))
+				.build();
+
+		CommandSpec daMsgCmd = CommandSpec.builder()
+				.description(Text.of("Send a Discord message to a player by their Minecraft username."))
+				.arguments(
+						GenericArguments.user(Text.of("user")),
+						GenericArguments.remainingJoinedStrings(Text.of("msg")))
+				.executor(new MsgExecutor(this.agentService))
+				.build();
+
+		CommandSpec daCmd = CommandSpec.builder()
+				.child(daLinkCmd, "link")
+				.child(daMsgCmd, "msg")
+				.build();
+
+		CommandMapping s = Sponge.getCommandManager().register(this, daCmd, "discordagent", "dagent", "da").get();
+		this.logger.info("Registered command: " + s.getPrimaryAlias());
 
 	}
 
