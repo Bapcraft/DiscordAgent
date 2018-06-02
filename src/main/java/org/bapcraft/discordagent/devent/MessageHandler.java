@@ -95,9 +95,11 @@ public class MessageHandler implements EventListener {
 						.queue();
 
 				// Send the player a message in the channel.
-				mre.getChannel()
-						.sendMessage(u.getAsMention() + " Just sent you a private message, check your PMs!")
-						.queue();
+				if (msg.getChannel().getIdLong() != ch.getIdLong()) {
+					mre.getChannel()
+							.sendMessage(u.getAsMention() + " Just sent you a private message, check your PMs!")
+							.queue();
+				}
 
 			}, err -> {
 				this.logger.error("Couldn't open private message channel with " + u.getAsMention() + "!", err);
