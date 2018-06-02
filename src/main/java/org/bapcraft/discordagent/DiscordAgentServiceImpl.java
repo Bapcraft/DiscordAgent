@@ -53,6 +53,11 @@ public class DiscordAgentServiceImpl implements DiscordAgentService {
 		this.logger.info("To user " + uuid + " on Discord: " + message);
 
 		UserProfile prof = this.storage.getDiscordUser(uuid);
+		if (prof == null) {
+			this.logger.warn("Wanted to send a message to user that hasn't registered yet: " + uuid);
+			return;
+		}
+
 		User du = this.jda.getUserById(prof.snowflakeId);
 		du.openPrivateChannel().queue(ch -> {
 			ch.sendMessage(message).queue();

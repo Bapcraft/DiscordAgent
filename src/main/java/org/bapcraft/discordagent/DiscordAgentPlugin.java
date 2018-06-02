@@ -8,6 +8,7 @@ import org.bapcraft.discordagent.api.DiscordAgentService;
 import org.bapcraft.discordagent.cmd.AnnounceExecutor;
 import org.bapcraft.discordagent.cmd.LinkExecutor;
 import org.bapcraft.discordagent.cmd.MsgExecutor;
+import org.bapcraft.discordagent.cmd.RawMsgExecutor;
 import org.bapcraft.discordagent.devent.MessageHandler;
 import org.bapcraft.discordagent.storage.AgentStorage;
 import org.bapcraft.discordagent.storage.FileAgentStorage;
@@ -132,11 +133,21 @@ public class DiscordAgentPlugin {
 				.arguments(GenericArguments.remainingJoinedStrings(Text.of("msg")))
 				.executor(new AnnounceExecutor(this.agentService))
 				.build();
-		
+
+		CommandSpec daRawMsgCmd = CommandSpec.builder()
+				.description(Text.of("Send a raw message to a user, replacing '\n' with newlines.  Usually used for automated messages."))
+				.permission("discordagent.cmd.rawmsg")
+				.arguments(
+						GenericArguments.uuid(Text.of("uuid")),
+						GenericArguments.remainingJoinedStrings(Text.of("msg")))
+				.executor(new RawMsgExecutor(this.agentService))
+				.build();
+
 		CommandSpec daCmd = CommandSpec.builder()
 				.child(daLinkCmd, "link")
 				.child(daMsgCmd, "msg")
 				.child(daAnnCmd, "announce")
+				.child(daRawMsgCmd, "rawmsg")
 				.build();
 
 		CommandMapping s = Sponge.getCommandManager().register(this, daCmd, "discordagent", "dagent", "da").get();

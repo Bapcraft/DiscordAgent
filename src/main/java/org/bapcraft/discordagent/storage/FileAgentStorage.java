@@ -53,6 +53,10 @@ public class FileAgentStorage implements AgentStorage {
 	@Override
 	public UserProfile getDiscordUser(UUID minecraftUuid) {
 		File userFile = this.getUserFile(minecraftUuid);
+		if (!userFile.exists()) {
+			return null;
+		}
+
 		try (FileReader fr = new FileReader(userFile)) {
 			Gson gson = this.createGson();
 			return gson.fromJson(fr, UserProfile.class);
