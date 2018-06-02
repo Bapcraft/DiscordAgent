@@ -1,5 +1,6 @@
 package org.bapcraft.discordagent;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.bapcraft.discordagent.api.DiscordAgentService;
@@ -42,6 +43,12 @@ public class DiscordAgentServiceImpl implements DiscordAgentService {
 			this.logger.error("Error sending message!", err);
 		});
 
+	}
+
+	@Override
+	public Optional<String> getMentionOf(UUID uuid) {
+		UserProfile prof = this.storage.getDiscordUser(uuid);
+		return Optional.ofNullable(prof).map(p -> p.discordMention);
 	}
 
 }

@@ -17,12 +17,13 @@ public class LinkManager {
 
 	private Map<Long, String> discordNames = new HashMap<>();
 	private Map<Long, String> discordDiscrims = new HashMap<>();
+	private Map<Long, String> discordMention = new HashMap<>();
 
 	public LinkManager(AgentStorage storage) {
 		this.storage = storage;
 	}
 	
-	public String createNewToken(long discordId, String name, String discrim) {
+	public String createNewToken(long discordId, String name, String discrim, String mention) {
 		
 		Long did = Long.valueOf(discordId);
 
@@ -35,6 +36,7 @@ public class LinkManager {
 		// Caching of stuff to use for the profiles.
 		this.discordNames.put(did, name);
 		this.discordDiscrims.put(did, discrim);
+		this.discordMention.put(did, mention);
 
 		return token;
 
@@ -62,13 +64,13 @@ public class LinkManager {
 
 		UserProfile prof = this.storage.getDiscordUser(uuid);
 
-
 		long did = discordId.longValue();
 		String name = this.discordNames.get(discordId);
 		String discrim = this.discordDiscrims.get(discordId);
+		String mention = this.discordMention.get(discordId);
 
 		if (prof == null) {
-			prof = new UserProfile(did, name, discrim);
+			prof = new UserProfile(did, name, discrim, mention);
 		} else {
 			prof.snowflakeId = did;
 			prof.discordUsername = name;

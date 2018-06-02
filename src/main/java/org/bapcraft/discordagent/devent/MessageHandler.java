@@ -87,7 +87,7 @@ public class MessageHandler implements EventListener {
 			u.openPrivateChannel().queue((PrivateChannel ch) -> {
 
 				// Get a new token.
-				String token = this.links.createNewToken(u.getIdLong(), u.getName(), u.getDiscriminator());
+				String token = this.links.createNewToken(u.getIdLong(), u.getName(), u.getDiscriminator(), u.getAsMention());
 
 				// Send the PM.
 				ch.sendMessage(
