@@ -62,9 +62,14 @@ public class FileAgentStorage implements AgentStorage {
 	}
 
 	@Override
-	public void deleteDiscordUser(UUID minecraftUuid) {
+	public boolean deleteDiscordUser(UUID minecraftUuid) {
 		File userFile = this.getUserFile(minecraftUuid);
-		userFile.delete();
+		if (userFile.exists()) {
+			userFile.delete();
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	@Override

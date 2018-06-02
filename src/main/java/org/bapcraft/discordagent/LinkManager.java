@@ -7,11 +7,13 @@ import java.util.UUID;
 
 import org.bapcraft.discordagent.storage.AgentStorage;
 import org.bapcraft.discordagent.storage.UserProfile;
+import org.slf4j.Logger;
 
 public class LinkManager {
 
 	public static final String tokenStrs = "aeioujklty"; // make it short because it's cool
 
+	private Logger logger;
 	private Map<String, Long> unredeemedTokens = new HashMap<>();
 	private AgentStorage storage;
 
@@ -19,11 +21,19 @@ public class LinkManager {
 	private Map<Long, String> discordDiscrims = new HashMap<>();
 	private Map<Long, String> discordMention = new HashMap<>();
 
-	public LinkManager(AgentStorage storage) {
+	public LinkManager(Logger logger, AgentStorage storage) {
+		this.logger = logger;
 		this.storage = storage;
 	}
 	
 	public String createNewToken(long discordId, String name, String discrim, String mention) {
+
+		UUID oldUuid = this.storage.getMinecraftUuidFromDiscord(discordId);
+		boolean deleted = false;
+		if (oldUuid != null) {
+			boolean succ = this.storage.deleteDiscordUser(oldUuid);
+			deleted = true;
+		}
 		
 		Long did = Long.valueOf(discordId);
 
@@ -31,6 +41,12 @@ public class LinkManager {
 		if (token == null) {
 			token = generateToken();
 			this.unredeemedTokens.put(token, did);
+		}
+
+		String prettyName = String.format("@%s#%s", name, discrim);
+		this.logger.info("Created new Discord token for " + prettyName + ": " + token);
+		if (deleted) {
+			this.logger.warn("Had to unlink" + prettyName + " from Minecraft user " + oldUuid + "!");
 		}
 
 		// Caching of stuff to use for the profiles.

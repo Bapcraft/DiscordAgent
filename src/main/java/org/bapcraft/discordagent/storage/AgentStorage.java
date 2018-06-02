@@ -8,7 +8,7 @@ public interface AgentStorage {
 
 	UserProfile getDiscordUser(UUID minecraftUuid);
 
-	void deleteDiscordUser(UUID minecraftUuid);
+	boolean deleteDiscordUser(UUID minecraftUuid);
 
 	UUID getMinecraftUuidFromDiscord(long snowflake);
 

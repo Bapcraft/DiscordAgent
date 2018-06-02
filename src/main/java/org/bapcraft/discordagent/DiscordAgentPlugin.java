@@ -94,7 +94,7 @@ public class DiscordAgentPlugin {
 		this.storage = new FileAgentStorage(storageDir, this.logger);
 
 		// Prepare out link manager.
-		this.linkManager = new LinkManager(this.storage);
+		this.linkManager = new LinkManager(this.logger, this.storage);
 
 		// Set up the connection to the Discord server.
 		this.logger.info("Using Discord auth token: " + this.config.botAuthToken.substring(0, 8) + "... (snipped)");
