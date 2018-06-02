@@ -9,4 +9,7 @@ public class DAConfig {
 	@Setting(value = "bot_token")
 	public String botAuthToken = "";
 
+	@Setting(value = "announce_channel")
+	public String announcementChannel = "";
+
 }

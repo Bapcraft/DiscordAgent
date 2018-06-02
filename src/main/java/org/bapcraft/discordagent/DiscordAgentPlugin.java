@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import org.bapcraft.discordagent.api.DiscordAgentService;
+import org.bapcraft.discordagent.cmd.AnnounceExecutor;
 import org.bapcraft.discordagent.cmd.LinkExecutor;
 import org.bapcraft.discordagent.cmd.MsgExecutor;
 import org.bapcraft.discordagent.devent.MessageHandler;
@@ -107,25 +108,35 @@ public class DiscordAgentPlugin {
 		String inviteUrl = ai.getInviteUrl(net.dv8tion.jda.core.Permission.ALL_GUILD_PERMISSIONS);
 		this.logger.info("Discord bot needs to be invited to server if not: " + inviteUrl);
 
-		this.agentService = new DiscordAgentServiceImpl(this.logger, this.storage, jda);
+		this.agentService = new DiscordAgentServiceImpl(this.logger, this.config, this.storage, jda);
 
 		CommandSpec daLinkCmd = CommandSpec.builder()
 				.description(Text.of("Link your Minecraft account to your Discord account using the token."))
+				.permission("discordagent.cmd.link")
 				.arguments(GenericArguments.string(Text.of("token")))
 				.executor(new LinkExecutor(this.linkManager))
 				.build();
 
 		CommandSpec daMsgCmd = CommandSpec.builder()
 				.description(Text.of("Send a Discord message to a player by their Minecraft username."))
+				.permission("discordagent.cmd.msg")
 				.arguments(
 						GenericArguments.user(Text.of("user")),
 						GenericArguments.remainingJoinedStrings(Text.of("msg")))
 				.executor(new MsgExecutor(this.agentService))
 				.build();
 
+		CommandSpec daAnnCmd = CommandSpec.builder()
+				.description(Text.of("Make an announcement to the annoucements channel(s) on Discord."))
+				.permission("discordagent.cmd.announce")
+				.arguments(GenericArguments.remainingJoinedStrings(Text.of("msg")))
+				.executor(new AnnounceExecutor(this.agentService))
+				.build();
+		
 		CommandSpec daCmd = CommandSpec.builder()
 				.child(daLinkCmd, "link")
 				.child(daMsgCmd, "msg")
+				.child(daAnnCmd, "announce")
 				.build();
 
 		CommandMapping s = Sponge.getCommandManager().register(this, daCmd, "discordagent", "dagent", "da").get();
